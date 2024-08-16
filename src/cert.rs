@@ -49,19 +49,16 @@ pub(crate) fn create_csr(pkey: &PKey<pkey::Private>, domains: &[&str]) -> Result
     let mut req_bld = X509ReqBuilder::new().expect("X509ReqBuilder");
 
     // set private/public key in builder
-    req_bld.set_pubkey(&pkey).expect("set_pubkey");
+    req_bld.set_pubkey(pkey).expect("set_pubkey");
 
     // set all domains as alt names
     let mut stack = Stack::new().expect("Stack::new");
     let ctx = req_bld.x509v3_context(None);
-    let as_lst = domains
-        .iter()
-        .map(|&e| format!("DNS:{}", e))
-        .collect::<Vec<_>>()
-        .join(", ");
-    let as_lst = as_lst[4..].to_string();
     let mut an = SubjectAlternativeName::new();
-    an.dns(&as_lst);
+    for d in domains {
+        an.dns(d);
+    }
+
     let ext = an.build(&ctx).expect("SubjectAlternativeName::build");
     stack.push(ext).expect("Stack::push");
     req_bld.add_extensions(&stack).expect("add_extensions");

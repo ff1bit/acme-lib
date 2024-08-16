@@ -47,7 +47,7 @@ impl<P: Persist> Directory<P> {
     /// Create a directory over a persistence implementation and directory url.
     pub fn from_url(persist: P, url: DirectoryUrl) -> Result<Directory<P>> {
         let dir_url = url.to_url();
-        let res = req_handle_error(req_get(&dir_url))?;
+        let res = req_handle_error(req_get(dir_url))?;
         let api_directory: ApiDirectory = read_json(res)?;
         let nonce_pool = Arc::new(NoncePool::new(&api_directory.newNonce));
         Ok(Directory {
@@ -73,7 +73,7 @@ impl<P: Persist> Directory<P> {
     pub fn account(&self, contact_email: &str) -> Result<Account<P>> {
         // Contact email is the persistence realm when using this method.
         let contact = vec![format!("mailto:{}", contact_email)];
-        self.account_with_realm(contact_email, contact)
+        self.account_with_realm(contact_email, Some(contact))
     }
 
     /// Access an account using a lower level method. The contact is optional
@@ -92,7 +92,11 @@ impl<P: Persist> Directory<P> {
     ///
     /// Either way the `newAccount` API endpoint is called and thereby ensures the
     /// account is active and working.
-    pub fn account_with_realm(&self, realm: &str, contact: Vec<String>) -> Result<Account<P>> {
+    pub fn account_with_realm(
+        &self,
+        realm: &str,
+        contact: Option<Vec<String>>,
+    ) -> Result<Account<P>> {
         // key in persistence for acme account private key
         let pem_key = PersistKey::new(realm, PersistKind::AccountPrivateKey, "acme_account");
 
